@@ -33,18 +33,4 @@ Linux Self-Hosted Agent
 
 AWS and Azure access is handled through **Azure DevOps service connections**. The pipeline references the configured service connections for AWS and Azure operations instead of storing access keys, passwords, or other credentials in the YAML file. This keeps cloud credentials external to the source code while allowing the pipeline to authenticate with the required services during execution.
 
-### Repository Structure
-
-```text
-azure-devops-aws-hybrid-cicd/
-├── src/
-├── azure-pipelines.yml
-├── build.sh
-├── build-windows.sh
-├── README.md
-└── LICENSE
-```
-
 <img width="1554" height="649" alt="AWS+Azure+AzureDevOps+Linux" src="https://github.com/user-attachments/assets/6b34f218-88fc-48c7-8a76-f683d5a2964d" />
-
-`azure-pipelines.yml` defines the CI/CD workflow, while `build.sh` contains the application compilation and WAR packaging logic.

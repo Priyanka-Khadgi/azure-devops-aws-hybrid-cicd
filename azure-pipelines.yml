@@ -6,54 +6,59 @@
 trigger:
 - main
 
-pool: batch-28
+pool: Azure-Aws-Project
 
 steps:
-
+# 1. Print Build Information
 - script: echo "The build ID is $(Build.BuildId) & build number is $(Build.BuildNumber)." 
   displayName: 'Printing the build ID and build number'
 
+# 2. Install Java
 - script: sudo apt update  && sudo apt-get install openjdk-8-jdk -y && java -version
   displayName: 'Installing and chking java version'
 
-- script: ls -al && chmod 700 build.sh && sudo bash ./build.sh && ls -al
+# 3. Run application build
+- script: ls -al && chmod 700 build.sh && bash ./build.sh && ls -al
   displayName: Run the build script
 
+# 4. Rename generated WAR file
 - script: ls -la && mv ROOT.war ROOT$(Build.BuildId).war && ls -la
   displayName: Renaming file ROOT.war
 
 
-
+# 5. Copy WAR to Azure Devops artifact staging directory
 - task: CopyFiles@2
   inputs:
     Contents: 'ROOT$(Build.BuildId).war'
     TargetFolder: '$(Build.ArtifactStagingDirectory)'
     OverWrite: true
 
+# 6. Vrify Artifact
 - script: ls -al $(Build.ArtifactStagingDirectory)
   displayName: listing artifcat
 
+#7. Publish Artifact to Azure Devops
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'ROOT$(Build.BuildId).war'
     publishLocation: 'Container'
 
-
+# 8. Upload WAR to Amazon S3
 - task: S3Upload@1
   inputs:
-    awsCredentials: 'batch-28-AzureDevOps-AWS'
-    regionName: 'ap-south-1'
-    bucketName: 'aws-s3-bucket-ygminds-batch-28'
+    awsCredentials: 'AzureDevops-to-AWS'
+    regionName: 'ap-southeast-2'
+    bucketName: 'azure-aws-cicd-pipeline'
     sourceFolder: '$(Build.ArtifactStagingDirectory)'
     globExpressions: '**'
     filesAcl: 'bucket-owner-full-control'
 
-
+# 9. Upload WAR to Azure
 - task: AzureCLI@2
   inputs:
-    azureSubscription: 'batch-27-AzureDevOps-Azure'
+    azureSubscription: 'AzureDevops-to-Azure'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
-    inlineScript: 'az storage blob upload-batch --account-name batch25storageaccount123 --destination artifactcontainer --source $(Build.ArtifactStagingDirectory) --pattern **.war'
+    inlineScript: 'az storage blob upload-batch --account-name azureawsstorageaccount --destination artifactcontainer --source $(Build.ArtifactStagingDirectory) --pattern **.war'
 
